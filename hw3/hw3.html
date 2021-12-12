@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #info {
+            position: absolute;
+            top: 5px;
+            width: 100%;
+
+            padding: 5px;
+            text-align: center;
+            font-size: 20px;
+            color: #000000
+        }
+
+        body {
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id='info'>
+        <h2>Customized shape in Three.js</h2>
+        <button id="switch" style="width:12%">Toggle</button>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+    <script type="module">
+
+        import * as THREE from 'https://cdn.skypack.dev/three@0.133.1';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.133.1/examples/jsm/controls/OrbitControls.js';
+
+        $("#switch").click(function () {
+            switchMode = !switchMode;
+        });
+
+
+        const objectColors = [0xff0000, 0xff6600, 0xffff00, 0x00ff00, 0x0066ff, 0x6600ff, 0xcc0099];
+        var renderer, scene, camera, cameraT, cameraF, cameraS;
+        var switchMode = false;
+        var gridXZ;
+
+
+        function buildCustomizedShape() {
+
+            var customizedObject = new THREE.Group();
+
+            var material = new THREE.MeshPhongMaterial({
+                color: pickRandomColor(objectColors), shininess: 200
+            });
+
+            var mainShape = new THREE.Shape();
+            mainShape.moveTo(0, 0);
+            mainShape.lineTo(0, 25);
+            mainShape.lineTo(60, 25);
+            mainShape.absarc(70, 25, 10, Math.PI, Math.PI * 3 / 2, false);
+            mainShape.lineTo(70, 0);
+            mainShape.lineTo(0, 0);
+
+            var extrudeSettings1 = {
+                steps: 1,
+                depth: 60,
+                bevelEnabled: false,
+            };
+
+            var mainObject = new THREE.Mesh(new THREE.ExtrudeGeometry(mainShape, extrudeSettings1), material);
+
+            var topShape = new THREE.Shape();
+            topShape.moveTo(0, 25);
+            topShape.lineTo(0, 50);
+            topShape.lineTo(15, 50);
+            topShape.lineTo(15, 30);
+            topShape.lineTo(45, 30);
+            topShape.lineTo(45, 50);
+            topShape.lineTo(60, 50);
+            topShape.lineTo(60, 25);
+            topShape.lineTo(0, 25);
+
+            var extrudeSettings2 = {
+                steps: 1,
+                depth: 13,
+                bevelEnabled: false,
+            };
+
+            var topObject1 = new THREE.Mesh(new THREE.ExtrudeGeometry(topShape, extrudeSettings2), material);
+            topObject1.rotation.y = Math.PI / 2;
+            topObject1.position.z = 60;
+
+            var topObject2 = new THREE.Mesh(new THREE.ExtrudeGeometry(topShape, extrudeSettings2), material);
+            topObject2.rotation.y = Math.PI / 2;
+            topObject2.position.z = 60;
+            topObject2.position.x = 47;
+
+            var rightShape = new THREE.Shape();
+            rightShape.moveTo(70, 0);
+            rightShape.lineTo(70, 60);
+            rightShape.lineTo(100, 60);
+            rightShape.absarc(100, 30, 30, Math.PI / 2, Math.PI * 3 / 2, true);
+            rightShape.lineTo(70, 0);
+
+            var extrudeSettings3 = {
+                steps: 1,
+                depth: 15,
+                bevelEnabled: false,
+            };
+
+            var hole = new THREE.Path();
+            hole.moveTo(100, 30);
+            hole.absarc(100, 30, 11, 0, Math.PI * 2, false);
+            rightShape.holes.push(hole);
+
+            var rightObject = new THREE.Mesh(new THREE.ExtrudeGeometry(rightShape, extrudeSettings3), material);
+            rightObject.rotation.x = Math.PI / 2;
+            rightObject.position.y = 15;
+
+            return customizedObject.add(mainObject, topObject1, topObject2, rightObject);
+        }
+
+        function pickRandomColor(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        init();
+        animate();
+
+        function init() {
+
+            scene = new THREE.Scene();
+
+            gridXZ = new THREE.GridHelper(500, 50, 'red', 'white');
+
+            renderer = new THREE.WebGLRenderer();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x888888);
+            document.body.appendChild(renderer.domElement);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(0, 100, 150);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+            // front
+            cameraF = new THREE.OrthographicCamera(-100, 100, 100, -100, -400, 100);
+            cameraF.position.set(0, 0, 50);
+            cameraF.lookAt(0, 0, 0);
+
+            // top
+            cameraT = new THREE.OrthographicCamera(-100, 100, 100, -100, -400, 400);
+            cameraT.position.set(0, 100, 0);
+            cameraT.lookAt(0, 0, 0);
+
+
+            //side
+            cameraS = new THREE.OrthographicCamera(-100, 100, 100, -100, -400, 400);
+            cameraS.position.set(100, 0, 0);
+            cameraS.lookAt(0, 0, 0);
+
+
+            let light = new THREE.PointLight(0xffffff);
+            light.position.set(100, 300, 200);
+            scene.add(light);
+
+            let controls = new OrbitControls(camera, renderer.domElement);
+
+            window.addEventListener('resize', onWindowResize, false);
+
+
+            ///////////////////////////////////////////////////////////////
+
+            var customizedObject;
+
+            customizedObject = buildCustomizedShape();
+
+            customizedObject.position.set(-65, -25, -30);
+
+            scene.add(customizedObject);
+
+
+        }
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+            render();
+
+        }
+
+        function render() {
+
+            var ww = window.innerWidth;
+            var hh = window.innerHeight;
+
+            renderer.clear();
+            if (switchMode === true) {
+                scene.remove(gridXZ);
+
+                renderer.setViewport(0, 0, ww / 2, hh / 2);
+                renderer.render(scene, cameraF);
+
+                renderer.setViewport(0, hh / 2, ww / 2, hh / 2);
+                renderer.render(scene, cameraT);
+
+                renderer.setViewport(ww / 2, 0, ww / 2, hh / 2);
+                renderer.render(scene, cameraS);
+
+                renderer.setViewport(ww / 2, hh / 2, ww / 2, hh / 2);
+                scene.add(gridXZ);
+                renderer.render(scene, camera);
+
+                renderer.autoClear = false;
+            }
+            else {
+
+                scene.add(gridXZ);
+                renderer.setViewport(0, 0, ww, hh);
+                renderer.render(scene, camera);
+            }
+
+        }
+
+        function onWindowResize() {
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+        }
+
+    </script>
+</body>
+
+</html>

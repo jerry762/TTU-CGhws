@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+
+            padding: 5px;
+            text-align: center;
+            font-size: 20px;
+            color: #000000
+        }
+
+        body {
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+    <div id='info'>
+        <h1>driver game in Three.js</h1>
+    </div>
+    <script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+    <script type="module">
+        import * as THREE from "https://threejs.org/build/three.module.js";
+        import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
+
+        var camera, scene, renderer;
+        var group = new THREE.Group();
+        var obstacles = [];
+        var record = [];
+
+        var back = false;
+        var pos = new THREE.Vector3();
+        var vel = new THREE.Vector3();
+        var force = new THREE.Vector3();
+        var power, angle;
+        var keyboard = new KeyboardState();
+        var clock;
+        var cameraHUD2, sceneHUD;
+        var IsBCollision = false;
+        var IsCollision = false;
+
+
+        (function () {
+            Math.clamp = function (val, min, max) {
+                return Math.min(Math.max(val, min), max);
+
+            }
+        })();
+
+        function buildVehicle() {
+            var car = new THREE.Group();
+
+            var backWheel = Wheel();
+            backWheel.position.x = -4;
+
+            car.add(backWheel);
+
+            var frontWheel = Wheel();
+            frontWheel.position.x = 4;
+            car.add(frontWheel);
+
+            var main = new THREE.Mesh(new THREE.BoxBufferGeometry(16, 7, 4), new THREE.MeshPhongMaterial({ color: 0xa52523 }));
+            main.rotation.x = -90 / 180 * Math.PI;
+            main.position.y = 2;
+            car.add(main);
+
+            var cabin = new THREE.Mesh(new THREE.BoxBufferGeometry(8, 6, 3), new THREE.MeshPhongMaterial({ color: 0xffffff }));
+            cabin.rotation.x = -90 / 180 * Math.PI;
+            cabin.position.y = 5.5;
+            cabin.position.x = -1;
+            car.add(cabin);
+
+            return car;
+        }
+
+        function Wheel() {
+            var wheel = new THREE.Mesh(new THREE.BoxBufferGeometry(3, 8, 2), new THREE.MeshPhongMaterial({ color: 0x333333 }));
+            wheel.rotation.x = -90 / 180 * Math.PI;
+            wheel.position.y = -1;
+            return wheel;
+        }
+
+        function buildObstacle(record, i) {
+            var radius = Math.floor(Math.random() * (15 - 3)) + 3;
+            var obstacle = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 40, 50), new THREE.MeshPhongMaterial({ color: 0x0000cc }));
+            obstacle.position.y = 20;
+            do {
+                var xRandom = Math.floor(Math.random() * (180 + 180)) - 180;
+                var zRandom = Math.floor(Math.random() * (180 + 180)) - 180;
+            } while ((-20 < xRandom && xRandom < 20) || (-20 < zRandom && zRandom < 20));
+
+            obstacle.position.x = xRandom;
+            obstacle.position.z = zRandom;
+            record[i] = radius;
+
+            return obstacle;
+        }
+
+        init();
+        animate();
+
+        function init() {
+
+            clock = new THREE.Clock();
+            scene = new THREE.Scene();
+
+            var light = new THREE.PointLight(0xffffff, 1, 3000);
+            light.position.set(70, 100, 70);
+            scene.add(light);
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x888888);
+            document.body.appendChild(renderer.domElement);
+            window.addEventListener('resize', onWindowResize, false);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+
+            camera.position.set(-60, 20, 5);
+
+            let controls = new OrbitControls(camera, renderer.domElement);
+
+            ////////////////////////////////////////////////////////////////
+            var gridXZ = new THREE.GridHelper(400, 20, 'red', 'white');
+            scene.add(gridXZ);
+
+            group = buildVehicle();
+
+
+            scene.add(group);
+
+            for (let i = 0; i < 12; i++) {
+                obstacles[i] = buildObstacle(record, i);
+                scene.add(obstacles[i]);
+            }
+
+            //controls.enableKeys = false;
+            power = 5.0;
+            angle = 0.0;
+
+            initHUD();
+            renderer.autoClear = false;
+
+        }
+
+
+        function animate() {
+
+            var dt = clock.getDelta();
+
+            update(dt);
+
+            camera.position.copy(group.localToWorld(new THREE.Vector3(-60, 20, 0)));
+            camera.lookAt(group.localToWorld(new THREE.Vector3(8, 0, 2)));
+
+            checkCollision();
+
+            group.position.copy(pos);
+            group.rotation.y = angle;
+
+            requestAnimationFrame(animate);
+            render();
+        }
+
+        function update(dt) {
+
+            keyboard.update();
+
+            if (vel.length() > 0) {
+                angle = 1.5 * Math.PI + Math.atan2(vel.x, vel.z);
+            }
+
+            if (keyboard.pressed("space") && !back)
+                power = 0.01;
+            if (keyboard.pressed("space") && back)
+                power = -0.01;
+            if (keyboard.pressed("up"))
+                if (IsCollision)
+                    power = 0;
+                else
+                    power += 1.2;
+            if (keyboard.pressed("down"))
+                if (IsBCollision)
+                    power = 0;
+                else
+                    power -= 1.2;
+
+            power = Math.clamp(power, -160.0, 160.0);
+
+            if (power > 0) back = false;
+            else back = true;
+
+
+            var angle_thrust = angle;
+            if (keyboard.pressed("left"))
+                angle_thrust += 0.9;
+            if (keyboard.pressed("right"))
+                angle_thrust -= 0.9;
+
+            // compute force
+
+            var thrust = new THREE.Vector3(1, 0, 0).multiplyScalar(Math.abs(power)).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle_thrust);
+            force.copy(thrust);
+            force.add(vel.clone().multiplyScalar(-2))
+
+            if (power < 0) {
+                vel.add(force.clone().multiplyScalar(dt));
+                pos.add(vel.clone().multiplyScalar(-1).multiplyScalar(dt));
+            }
+            else if (power == 0) {
+                vel.add(force.clone().multiplyScalar(dt));
+                pos.add(vel.clone().multiplyScalar(0).multiplyScalar(dt));
+            }
+            else {
+                vel.add(force.clone().multiplyScalar(dt));
+                pos.add(vel.clone().multiplyScalar(dt));
+            }
+        }
+
+        function checkCollision() {
+
+            let Rect = makeRect();
+
+            for (let i = 0; i < 12; i++) {
+
+                if (power > 0 && !IsBCollision) {
+                    if (Check_Intersect(Rect, obstacles[i], record[i]) && !IsCollision) {
+                        IsCollision = true;
+                        power = 0;
+                    }
+                }
+                else if (power < 0 && !IsCollision) {
+                    if (Check_Intersect(Rect, obstacles[i], record[i]) && !IsBCollision) {
+                        IsBCollision = true;
+                        power = 0;
+                    }
+                }
+            }
+
+            if (!Check_Intersect(Rect, obstacles[0], record[0]) && !Check_Intersect(Rect, obstacles[1], record[1]) &&
+                !Check_Intersect(Rect, obstacles[2], record[2]) && !Check_Intersect(Rect, obstacles[3], record[3]) &&
+                !Check_Intersect(Rect, obstacles[4], record[4]) && !Check_Intersect(Rect, obstacles[5], record[5]) &&
+                !Check_Intersect(Rect, obstacles[6], record[6]) && !Check_Intersect(Rect, obstacles[7], record[7]) &&
+                !Check_Intersect(Rect, obstacles[8], record[8]) && !Check_Intersect(Rect, obstacles[9], record[9]) &&
+                !Check_Intersect(Rect, obstacles[10], record[10]) && !Check_Intersect(Rect, obstacles[11], record[11])) {
+                IsBCollision = false;
+                IsCollision = false;
+            }
+
+        }
+
+        function makeRect() {
+            let Rect = {};
+            Rect.max = group.localToWorld(new THREE.Vector3(8, 0, 2));
+            Rect.min = group.localToWorld(new THREE.Vector3(-8, 0, -2));
+            Rect.px = group.localToWorld(new THREE.Vector3(1, 0, 0)).sub(group.position);
+            return Rect;
+        }
+
+        function Check_Intersect(Rect, C, Rad) {
+            const Rad2 = Rad * Rad;
+
+            let xHat = Rect.px;
+            let zHat = xHat.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
+
+            let R = { max: { x: 0, z: 0 }, min: { x: 0, z: 0 } };
+            let cp = Rect.max.clone().sub(C.position);
+            R.max.x = cp.dot(xHat), R.max.z = cp.dot(zHat);
+
+            cp = Rect.min.clone().sub(C.position);
+            R.min.x = cp.dot(xHat), R.min.z = cp.dot(zHat);
+
+            if (R.max.x < 0) 			/* R to left of circle center */
+                if (R.max.z < 0) 		/* R in lower left corner */
+                    return ((R.max.x * R.max.x + R.max.z * R.max.z) < Rad2);
+                else if (R.min.z > 0) 	/* R in upper left corner */
+                    return ((R.max.x * R.max.x + R.min.z * R.min.z) < Rad2);
+                else 					/* R due West of circle */
+                    return (Math.abs(R.max.x) < Rad);
+            else if (R.min.x > 0)  	/* R to right of circle center */
+                if (R.max.z < 0) 	/* R in lower right corner */
+                    return ((R.min.x * R.min.x + R.max.z * R.max.z) < Rad2);
+                else if (R.min.z > 0)  	/* R in upper right corner */
+                    return ((R.min.x * R.min.x + R.min.z * R.min.z) < Rad2);
+                else 				/* R due East of circle */
+                    return (R.min.x < Rad);
+            else				/* R on circle vertical centerline */
+                if (R.max.z < 0) 	/* R due South of circle */
+                    return (Math.abs(R.max.z) < Rad);
+                else if (R.min.z > 0)  	/* R due North of circle */
+                    return (R.min.z < Rad);
+                else 				/* R contains circle centerpoint */
+                    return (true);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        function render() {
+
+            var WW = window.innerWidth;
+            var HH = window.innerHeight;
+
+            renderer.clear();
+
+            renderer.setViewport(0, 0, WW / 3, HH);
+            camera.aspect = WW / 1.5 / HH;
+            camera.updateProjectionMatrix();
+
+            renderer.render(scene, cameraHUD2);
+            //renderer.render(sceneHUD, cameraHUD2);
+
+            renderer.setViewport(WW / 3, 0, WW / 1.55, HH);
+
+            renderer.render(scene, camera);
+            //renderer.render(sceneHUD, cameraHUD2);
+        }
+        function initHUD() {
+            // sceneHUD: a simple line boundary
+            sceneHUD = new THREE.Scene();
+
+            cameraHUD2 = new THREE.OrthographicCamera(-240, 240, 230, -230, -400, 400);
+            cameraHUD2.position.set(0, 30, 0);
+            cameraHUD2.up.set(0, 0, -1)   // for top view
+            cameraHUD2.lookAt(new THREE.Vector3())
+
+            let points = [];
+            points.push(new THREE.Vector3(-10, -10, 0),
+                new THREE.Vector3(10, -10, 0),
+                new THREE.Vector3(10, 10, 0),
+                new THREE.Vector3(-10, 10, 0),
+                new THREE.Vector3(-10, -10, 0));
+            var lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            var line = new THREE.Line(lineGeometry,
+                new THREE.LineBasicMaterial({
+                    color: 0xffffff
+                }));
+            sceneHUD.add(line);
+        }
+
+    </script>
+</body>
+
+</html>
