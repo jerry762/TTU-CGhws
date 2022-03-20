@@ -1,4 +1,4 @@
-import * as THREE from "https://threejs.org/build/three.module.js";
+import * as THREE from "https://cdn.skypack.dev/three@0.133.1";
 import { scene } from './main.js';
 
 class Candle {
@@ -61,7 +61,7 @@ class Candle {
 		// load a resource
 		var texture = loader.load(
 			// URL ...
-			'https://i.imgur.com/M2tr5Tm.png?1',
+			'fire.png',
 			// onLoad ...
 			function (texture) {
 				// do something with the texture

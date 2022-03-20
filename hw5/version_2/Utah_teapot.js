@@ -1,5 +1,5 @@
-import * as THREE from "https://threejs.org/build/three.module.js";
-import { TeapotGeometry } from "https://threejs.org/examples/jsm/geometries/TeapotGeometry.js";
+import * as THREE from "https://cdn.skypack.dev/three@0.133.1";
+import { TeapotGeometry } from "https://cdn.skypack.dev/three@0.133.1/examples/jsm/geometries/TeapotGeometry.js";
 
 class UtahTeapot {
 
