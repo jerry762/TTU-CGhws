@@ -1,18 +1,17 @@
 # TTU CSE Computer Graphics Homework 
 
 
-
 - Click **[here](https://jerry762.github.io/TTU-CGhws/index.html)** go to my homework website.  
 - Click **[here](https://github.com/jyunming-chen)** go to my teacher github for this course.  
 
 
 ## HW0 Cylinder:
 
-![Cylinder gif](hw0.gif)
+<img src="hw0.gif" alt="Cylinder gif" width="50%"/>
 
 ## HW1 Stopwatch:
 
-![Stopwatch gif](hw1/hw1.gif)
+<img src="hw1/hw1.gif" alt="Stopwatch gif" width="50%"/>
 
 ## HW2 Car Game:
 
