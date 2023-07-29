@@ -7,7 +7,7 @@
 
 ## HW0 Cylinder:
 
-<img src="hw0.gif" alt="Cylinder gif" width="50%"/>
+<img src="hw0/hw0.gif" alt="Cylinder gif" width="50%"/>
 
 ## HW1 Stopwatch:
 
