@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <style>
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+
+            padding: 5px;
+            text-align: center;
+            font-size: 20px;
+            color: #000000
+        }
+
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<body>
+
+
+    <div id='info'>
+        <h1>Restaurant</h1>
+        <input id="range" type="range" min="-1" max="0" value="0" step="0.1"></input>
+        <input id="power" type="button" value="Power On"></input>
+
+        <input id="left" type="button" value="Left" x="-500" y="600" z="0"></input>
+        <input id="center" type="button" value="Center" x="0" y="600" z="500"></input>
+        <input id="right" type="button" value="Right" x="500" y="600" z="0"></input>
+    </div>
+
+
+    <script type="module">
+
+        import * as THREE from 'https://cdn.skypack.dev/three@0.133.1';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.133.1/examples/jsm/controls/OrbitControls.js';
+
+        var camera, scene, renderer;
+        var pointLight;
+        var angle = 0;
+        var lights = [new THREE.PointLight(), new THREE.PointLight(), new THREE.PointLight()];
+        var isOn = true;
+
+        var intensity = 0;
+
+        init();
+        animate();
+
+        jQuery(function ($) {
+            var answer = parseInt($('#range').val());
+            $('#range').on('input', function () {
+
+                intensity = parseFloat($('#range').val());
+                if (isOn) {
+                    for (var i = 0; i < 3; i++) {
+                        lights[i].intensity = intensity;
+                    }
+                }
+                //console.log(intensity);
+            });
+        });
+
+        $("#power").click(function () {
+            if (!isOn) {
+                for (var i = 0; i < 3; i++) {
+                    lights[i].intensity = intensity;
+                }
+            } else {
+                for (var i = 0; i < 3; i++) {
+                    lights[i].intensity = -1;
+                }
+            }
+            isOn = !isOn;
+            var elem = document.getElementById("power");
+            if (elem.value == "Power On")
+                elem.value = "Power Off";
+            else elem.value = "Power On";
+        });
+
+        $("#left").click(function () {
+            camera.fov = 50;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.near = 1;
+            camera.far = 2000;
+            camera.position.x = parseInt($(this).attr('x'));
+            camera.position.y = parseInt($(this).attr('y'));
+            camera.position.z = parseInt($(this).attr('z'));
+            controls = new OrbitControls(camera, renderer.domElement);
+        });
+
+        $("#center").click(function () {
+            camera.fov = 50;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.near = 1;
+            camera.far = 2000;
+            camera.position.x = parseInt($(this).attr('x'));
+            camera.position.y = parseInt($(this).attr('y'));
+            camera.position.z = parseInt($(this).attr('z'));
+            controls = new OrbitControls(camera, renderer.domElement);
+        });
+
+
+        $("#right").click(function () {
+            camera.fov = 50;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.near = 1;
+            camera.far = 2000;
+            camera.position.x = parseInt($(this).attr('x'));
+            camera.position.y = parseInt($(this).attr('y'));
+            camera.position.z = parseInt($(this).attr('z'));
+            controls = new OrbitControls(camera, renderer.domElement);
+        });
+
+        function buildChair() {
+            var group = new THREE.Group();
+            var woodTex = new THREE.TextureLoader().load("https://images.unsplash.com/photo-1550895030-823330fc2551?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=387&q=80");
+            var mat = new THREE.MeshPhongMaterial({ map: woodTex });
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(150, 10, 50), mat);
+            var boxLeg1 = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 50), mat);
+            var boxLeg2 = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 50), mat);
+            boxTop.position.set(-150, 25, -150);
+            boxLeg1.position.set(-225, 15, -150);
+            boxLeg2.position.set(-75, 15, -150);
+            group.add(boxTop, boxLeg1, boxLeg2);
+            group.rotation.y = Math.PI / 2;
+            group.position.set(125, 0, -340);
+            return group;
+        }
+
+
+
+        function buildChair1() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, -270);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildChair2() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, -125);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildChair3() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, 125 - 200);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildChair4() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, 125 - 200 + 150);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildChair5() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, 125);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildChair6() {
+            var group = new THREE.Group();
+
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(200, 30, 50), new THREE.MeshPhongMaterial({ color: 0x000066 }));
+
+
+            boxTop.position.set(200, 15, 125 + 145);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildTable1() {
+
+
+            var group = new THREE.Group();
+
+            var Cylinder = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 46, 64), new THREE.MeshPhongMaterial({ color: "black" }));
+            Cylinder.position.set(0, 23, 0);
+
+            var plane = new THREE.Mesh(new THREE.BoxGeometry(200, 4, 50), new THREE.MeshPhongMaterial({ color: "gray" }));
+            plane.position.set(0, 46 + 2, 0);
+
+            group.add(Cylinder, plane);
+
+            group.position.set(200, 0, -200);
+
+            return group;
+        }
+
+        function buildTable2() {
+
+
+            var group = new THREE.Group();
+
+            var Cylinder = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 46, 64), new THREE.MeshPhongMaterial({ color: "black" }));
+            Cylinder.position.set(0, 23, 0);
+
+            var plane = new THREE.Mesh(new THREE.BoxGeometry(200, 4, 50), new THREE.MeshPhongMaterial({ color: "gray" }));
+            plane.position.set(0, 46 + 2, 0);
+
+            group.add(Cylinder, plane);
+
+            group.position.set(200, 0, 0);
+
+            return group;
+        }
+
+        function buildTable3() {
+
+
+            var group = new THREE.Group();
+
+            var Cylinder = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 46, 64), new THREE.MeshPhongMaterial({ color: "black" }));
+            Cylinder.position.set(0, 23, 0);
+
+            var plane = new THREE.Mesh(new THREE.BoxGeometry(200, 4, 50), new THREE.MeshPhongMaterial({ color: "gray" }));
+            plane.position.set(0, 46 + 2, 0);
+
+            group.add(Cylinder, plane);
+
+            group.position.set(200, 0, 200);
+
+            return group;
+        }
+
+        function floor() {
+            var group = new THREE.Group();
+            var woodTex = new THREE.TextureLoader().load("https://images.unsplash.com/photo-1566305977571-5666677c6e98?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=345&q=80");
+            var mat = new THREE.MeshPhongMaterial({ map: woodTex });
+            var boxTop = new THREE.Mesh(new THREE.BoxGeometry(600, 5, 600), mat);
+            boxTop.position.set(0, 0, 0);
+
+            group.add(boxTop);
+            return group;
+        }
+
+        function buildCounter() {
+            var group = new THREE.Group();
+
+            var woodTex = new THREE.TextureLoader().load("https://images.unsplash.com/photo-1619976553860-b7ffbe9a093b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=436&q=80");
+            var mat = new THREE.MeshPhongMaterial({ map: woodTex });
+
+            var plane1 = new THREE.Mesh(new THREE.BoxGeometry(180, 60, 30), mat);
+            plane1.position.set(-75, 30, 180);
+            plane1.rotation.y = Math.PI / 2;
+
+            var plane2 = new THREE.Mesh(new THREE.BoxGeometry(210, 60, 40), mat);
+            plane2.position.set(-195, 30, 110);
+
+            group.add(plane1, plane2);
+            return group;
+        }
+
+        var controls = 0;
+
+
+        function init() {
+
+            scene = new THREE.Scene();
+
+            renderer = new THREE.WebGLRenderer();
+
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+
+            renderer.setSize(width, height);
+
+
+            renderer.setClearColor(0x888888);
+            document.body.appendChild(renderer.domElement);
+
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+
+            camera.position.x = 0;
+            camera.position.y = 600;
+            camera.position.z = 500;
+            controls = new OrbitControls(camera, renderer.domElement);
+
+            ////////////////////////////////////////////////////////////////
+            var gridXZ = new THREE.GridHelper(6000, 800, 'red', 'white');
+            //scene.add(gridXZ);
+            //var floor = new THREE.Mesh (new THREE.PlaneGeometry(200,200), new THREE.MeshPhongMaterial());
+            //floor.rotation.x = -Math.PI/2;
+            //scene.add (floor);
+            const light = new THREE.AmbientLight(0xffffff); // soft white light
+            scene.add(light);
+
+            var traverse = new THREE.BoxGeometry(600, 100, 10);
+            var straight = new THREE.BoxGeometry(10, 100, 600);
+            var wall = new THREE.Mesh(traverse, new THREE.MeshPhongMaterial({ color: 0xe8d3be }));
+            wall.position.set(0, 50, 300);
+            var wall2 = new THREE.Mesh(straight, new THREE.MeshPhongMaterial({ color: 0xe8d3be }));
+            wall2.position.set(300, 50, 0);
+            var wall3 = new THREE.Mesh(traverse, new THREE.MeshPhongMaterial({ color: 0xe8d3be }));
+            wall3.position.set(0, 50, -300);
+            var wall4 = new THREE.Mesh(straight, new THREE.MeshPhongMaterial({ color: 0xe8d3be }));
+            wall4.position.set(-300, 50, 0);
+            //scene.add (wall2);
+            scene.add(wall, wall2, wall3, wall4);
+
+
+            var partition2 = new THREE.Mesh(new THREE.BoxGeometry(5, 100, 200), new THREE.MeshPhongMaterial({ color: 0x3a3b35 }));
+            partition2.position.set(0, 50, 200);
+            scene.add(partition2);
+            var partition3 = new THREE.Mesh(new THREE.BoxGeometry(200, 100, 5), new THREE.MeshPhongMaterial({ color: 0x3a3b35 }));
+            partition3.position.set(200, 50, 100);
+            scene.add(partition3);
+            var partition4 = new THREE.Mesh(new THREE.BoxGeometry(5, 100, 200), new THREE.MeshPhongMaterial({ color: 0x3a3b35 }));
+            partition4.position.set(0, 50, -200);
+            scene.add(partition4);
+            var partition5 = new THREE.Mesh(new THREE.BoxGeometry(200, 100, 5), new THREE.MeshPhongMaterial({ color: 0x3a3b35 }));
+            partition5.position.set(200, 50, -100);
+            scene.add(partition5);
+
+
+            window.addEventListener('resize', onWindowResize, false);
+
+            //var pointLight = new THREE.PointLight();
+            //pointLight.position.set(0, 400, 0);
+            //pointLight.power(100);
+            //scene.add (pointLight);
+
+
+
+            lights[0].position.set(-175, 120, 200);
+            lights[1].position.set(175, 120, 200);
+            lights[2].position.set(175, 120, -200);
+            lights[0].intensity = 0;
+            lights[1].intensity = 0;
+            lights[2].intensity = 0;
+            scene.add(lights[0], new THREE.PointLightHelper(lights[0], 4));
+
+            scene.add(lights[1], new THREE.PointLightHelper(lights[1], 4));
+
+            scene.add(lights[2], new THREE.PointLightHelper(lights[2], 4));
+
+            var chair = buildChair();
+            var chair1 = buildChair1();
+            var chair2 = buildChair2();
+            var chair3 = buildChair3();
+            var chair4 = buildChair4();
+            var chair5 = buildChair5();
+            var chair6 = buildChair6();
+
+            var table1 = buildTable1();
+            var table2 = buildTable2();
+            var table3 = buildTable3();
+
+            var counter = buildCounter();
+
+            var fl = floor();
+            scene.add(chair, fl, chair1, chair2, chair3, chair4, chair5, chair6, table1, table2, table3, counter);
+
+
+        }
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+
+            //angle += 0.01;
+            //pointLight.position.set (50*Math.cos(angle),30,50*Math.sin(angle));
+
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+
+
+    </script>
+
+
+</body>
+
+
+</html>
