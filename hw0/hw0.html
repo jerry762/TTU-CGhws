@@ -12,10 +12,10 @@
 
 <body>
 
-	<script src="https://threejs.org/build/three.min.js"></script>
-	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script type="module">
 
-	<script>
+		import * as THREE from 'https://cdn.skypack.dev/three@0.133.1';
+		import { OrbitControls } from 'https://cdn.skypack.dev/three@0.133.1/examples/jsm/controls/OrbitControls.js';
 
 		var renderer, scene, camera;
 		var cube;
@@ -44,7 +44,7 @@
 			camera.position.z = 40;
 			camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-			let controls = new THREE.OrbitControls(camera, renderer.domElement);
+			let controls = new OrbitControls(camera, renderer.domElement);
 
 			window.addEventListener('resize', onWindowResize, false);
 			///////////////////////////////////////////////////////////////

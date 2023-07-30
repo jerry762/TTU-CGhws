@@ -33,12 +33,13 @@
         <button id="start" style="width:20%">Start / press over 0.5sec reset</button><br>
         <button id="switch" style="width:20%">Switch(Continue)</button>
     </div>
-    <script src="https://threejs.org/build/three.min.js"></script>
-    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 
-    <script>
+    <script type="module">
+
+        import * as THREE from 'https://cdn.skypack.dev/three@0.133.1';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.133.1/examples/jsm/controls/OrbitControls.js';
 
         var aud = document.getElementById("myAudio");
         var renderer, scene, camera;
@@ -111,7 +112,7 @@
             camera.position.z = 60;
             camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-            let controls = new THREE.OrbitControls(camera, renderer.domElement);
+            let controls = new OrbitControls(camera, renderer.domElement);
 
             window.addEventListener('resize', onWindowResize, false);
             ///////////////////////////////////////////////////////////////
